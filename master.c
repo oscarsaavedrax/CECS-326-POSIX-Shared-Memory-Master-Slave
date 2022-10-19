@@ -12,3 +12,19 @@
  *  the content of the shared memory, removes the shared memory, and
  *  exits.
  ***********************************************************************/
+
+#include <stdio.h>
+
+int main(int argc, char** argv){
+
+    // Display identification
+    printf("Master begins execution\n");
+
+    // Create shared memory segment
+    printf("Master created a shared memory segment named %s\n", argv[2]);
+
+    // Create n children
+    printf("Master created %s to execute slave\n", argv[1]);
+
+    return 0;
+}
