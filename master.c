@@ -30,7 +30,7 @@
 int main(int argc, char** argv)
 {
     // Create variables
-    struct SHARED_MEM_CLASS *shm_structure;
+    struct SHARED_MEM_CLASS *shared_mem_struct;
     int shared_mem_fd;
 
     // Display identification
@@ -47,8 +47,21 @@ int main(int argc, char** argv)
     {
         // Resize the shared memory object to the size of the struct
         ftruncate(shared_mem_fd, sizeof(struct SHARED_MEM_CLASS));
-        
-        printf("Master created a shared memory segment named %s\n", argv[2]);
+
+        // Map the shared memory segment
+        shared_mem_struct = mmap(NULL, sizeof(struct SHARED_MEM_CLASS),
+                                    PROT_READ | PROT_WRITE, MAP_SHARED,
+                                    shared_mem_fd, 0);
+        if(shared_mem_struct == MAP_FAILED)
+        {
+            printf("Master: Map failed: %s\n", strerror(errno));
+            /* close and shm_unlink */
+            exit(1);
+        }
+        else
+        {
+            printf("Master created a shared memory segment named %s\n", argv[2]);
+        }
     }
     
     // Create n children
@@ -77,6 +90,13 @@ int main(int argc, char** argv)
     printf("\nMaster waits for all child processes to terminate\n");
     printf("Master received termination signals from all %s child processes\n", argv[1]);
 
+    
+    // Unmap the shared memory structure
+    if(munmap(shared_mem_struct, sizeof(struct SHARED_MEM_CLASS)) == -1)
+    {
+        printf("Master: Unmap failed: %s\n", strerror(errno));
+        exit(1);
+    }
 
     // Close the shared memory segment
     if (close(shared_mem_fd) == -1) {
@@ -86,5 +106,8 @@ int main(int argc, char** argv)
 
     // Delete the shared memory segment
     shm_unlink(argv[2]);
+
+    printf("Master removed shared memory segment and is exiting\n");
+
     return 0;
 }
