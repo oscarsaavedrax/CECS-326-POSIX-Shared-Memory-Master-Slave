@@ -13,19 +13,41 @@
  *  exits.
  ***********************************************************************/
 
+#include "myShm.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/shm.h>
+#include <string.h>
 
 int main(int argc, char** argv)
 {
+    // Create variables
+    struct SHARED_MEM_CLASS shm_structure;
+    int shared_mem_fd;
+
     // Display identification
     printf("Master begins execution\n");
 
     // Create shared memory segment
-    printf("Master created a shared memory segment named %s\n", argv[2]);
-
+    shared_mem_fd = shm_open(argv[2], O_CREAT | O_RDWR, 0666);
+    if(shared_mem_fd == -1)
+    {
+        printf("\nMaster: Shared memory failed: %s\n", strerror(errno));
+        exit(1);
+    }
+    else
+    {
+        printf("Master created a shared memory segment named %s\n", argv[2]);
+    }
+    
     // Create n children
     printf("Master created %s child processes to execute slave\n\n", argv[1]);
     for(int i = 0; i < atoi(argv[1]); i++)
@@ -52,5 +74,14 @@ int main(int argc, char** argv)
     printf("\nMaster waits for all child processes to terminate\n");
     printf("Master received termination signals from all %s child processes\n", argv[1]);
 
+
+    // Close the shared memory segment
+    if (close(shared_mem_fd) == -1) {
+      printf("prod: Close failed: %s\n", strerror(errno));
+      exit(1);
+    }
+
+    // Delete the shared memory segment
+    shm_unlink(argv[2]);
     return 0;
 }
