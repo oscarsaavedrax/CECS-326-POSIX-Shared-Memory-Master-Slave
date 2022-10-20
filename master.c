@@ -30,7 +30,7 @@
 int main(int argc, char** argv)
 {
     // Create variables
-    struct SHARED_MEM_CLASS shm_structure;
+    struct SHARED_MEM_CLASS *shm_structure;
     int shared_mem_fd;
 
     // Display identification
@@ -45,6 +45,9 @@ int main(int argc, char** argv)
     }
     else
     {
+        // Resize the shared memory object to the size of the struct
+        ftruncate(shared_mem_fd, sizeof(struct SHARED_MEM_CLASS));
+        
         printf("Master created a shared memory segment named %s\n", argv[2]);
     }
     
