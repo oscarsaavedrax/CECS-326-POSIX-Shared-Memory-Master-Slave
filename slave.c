@@ -29,57 +29,57 @@
 int main(int argc, char** argv)
 {
     // Create variables
-    const char *shared_mem_name = argv[1];
-    const int SIZE = sizeof(struct SHARED_MEM_CLASS);
+    const int child_num = atoi(argv[0]);  // child number
+    const char *shared_mem_name = argv[1];  // name of shared memory 
+    const int SIZE = sizeof(struct SHARED_MEM_CLASS);  // size of struct object
+    struct SHARED_MEM_CLASS *shared_mem_struct;  // structure of shared memory
+    int shared_mem_fd;  // shared memory file descriptor
 
-    struct SHARED_MEM_CLASS *shared_mem_struct;
-    int shared_mem_fd;
-
+    // Print child number and shared memory name
     printf("Slave begins execution\n");
-    printf("I am child number %s, received shared memory name %s\n", argv[0], argv[1]);
+    printf("I am child number %d, received shared memory name %s\n", child_num, shared_mem_name);
 
+    // Open the shared memory segment
     shared_mem_fd = shm_open(shared_mem_name, O_RDWR, 0666);
     if(shared_mem_fd == -1)
     {
-        printf("\nSlave %s: Shared memory failed: %s\n", argv[0], strerror(errno));
+        printf("\nSlave %d: Shared memory failed: %s\n", child_num, strerror(errno));
         exit(1);
     }
     else
     {
         // Map the shared memory segment
         shared_mem_struct = mmap(NULL, SIZE, PROT_WRITE, MAP_SHARED,
-                                    shared_mem_fd, 0);
+                                shared_mem_fd, 0);
         if(shared_mem_struct == MAP_FAILED)
         {
-        printf("\nSlave %s: Map failed: %s\n", argv[0], strerror(errno));
+        printf("\nSlave %d: Map failed: %s\n", child_num, strerror(errno));
             /* close and shm_unlink */
             exit(1);
         }
         else
         {   
             // Write to the shared memory segment
-            shared_mem_struct->response[shared_mem_struct->index] = atoi(argv[0]);
+            shared_mem_struct->response[shared_mem_struct->index] = child_num;
             shared_mem_struct->index += 1;
-            printf("I have written my child number [%s] to shared memory\n", argv[0]);
+            printf("I have written my child number [%d] to shared memory\n", child_num);
         }
         
         // Unmap the shared memory structure
         if(munmap(shared_mem_struct, SIZE) == -1)
         {
-        printf("\nSlave %s: Unmap failed: %s\n", argv[0], strerror(errno));
+            printf("\nSlave %d: Unmap failed: %s\n", child_num, strerror(errno));
             exit(1);
         }
 
         // Close the shared memory segment
         if (close(shared_mem_fd) == -1) 
         {
-        printf("\nSlave %s: Close failed: %s\n", argv[0], strerror(errno));
+            printf("\nSlave %d: Close failed: %s\n", child_num, strerror(errno));
             exit(1);
         }
         else
-        {
             printf("Slave closes access to shared memory and terminates\n");
-        }
     }
 
     return 0;
