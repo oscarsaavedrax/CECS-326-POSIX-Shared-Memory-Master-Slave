@@ -56,8 +56,11 @@ int main(int argc, char** argv)
             exit(1);
         }
         else
-        {
-            printf("SHARED MEM OPENED\n");
+        {   
+            // Write to the shared memory segment
+            shared_mem_struct->response[shared_mem_struct->index] = atoi(argv[0]);
+            shared_mem_struct->index += 1;
+            printf("I have written my child number [%s] to shared memory\n", argv[0]);
         }
         
         // Unmap the shared memory structure
@@ -72,6 +75,10 @@ int main(int argc, char** argv)
         {
         printf("\nSlave %s: Close failed: %s\n", argv[0], strerror(errno));
             exit(1);
+        }
+        else
+        {
+            printf("Slave closes access to shared memory and terminates\n");
         }
     }
 
