@@ -14,6 +14,9 @@
  ***********************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 int main(int argc, char** argv){
 
@@ -24,7 +27,15 @@ int main(int argc, char** argv){
     printf("Master created a shared memory segment named %s\n", argv[2]);
 
     // Create n children
-    printf("Master created %s to execute slave\n", argv[1]);
+    for(int i = 0; i < atoi(argv[1]); i++)
+    {
+        // Convert child integer to char
+        char child_num[20];
+        sprintf(child_num, "%d", i+1);
+
+        printf("Child num: %s\n", child_num);
+
+    }
 
     return 0;
 }
