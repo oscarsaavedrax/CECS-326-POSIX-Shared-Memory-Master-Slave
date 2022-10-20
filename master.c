@@ -30,14 +30,17 @@
 int main(int argc, char** argv)
 {
     // Create variables
-    struct SHARED_MEM_CLASS *shared_mem_struct;
-    int shared_mem_fd;
+    const int num_children = atoi(argv[1]); // number of child processes to create
+    const char *shared_mem_name = argv[2];  // name of shared memory 
+    const int SIZE = sizeof(struct SHARED_MEM_CLASS);  // size of struct object
+    struct SHARED_MEM_CLASS *shared_mem_struct;  // structure of shared memory
+    int shared_mem_fd;  // shared memory file descriptor
 
     // Display identification
     printf("Master begins execution\n");
 
     // Create shared memory segment
-    shared_mem_fd = shm_open(argv[2], O_CREAT | O_RDWR, 0666);
+    shared_mem_fd = shm_open(shared_mem_name, O_CREAT | O_RDWR, 0666);
     if(shared_mem_fd == -1)
     {
         printf("\nMaster: Shared memory failed: %s\n", strerror(errno));
@@ -46,12 +49,11 @@ int main(int argc, char** argv)
     else
     {
         // Resize the shared memory object to the size of the struct
-        ftruncate(shared_mem_fd, sizeof(struct SHARED_MEM_CLASS));
+        ftruncate(shared_mem_fd, SIZE);
 
         // Map the shared memory segment
-        shared_mem_struct = mmap(NULL, sizeof(struct SHARED_MEM_CLASS),
-                                    PROT_READ | PROT_WRITE, MAP_SHARED,
-                                    shared_mem_fd, 0);
+        shared_mem_struct = mmap(NULL, SIZE, PROT_READ | PROT_WRITE, 
+                                MAP_SHARED, shared_mem_fd, 0);
         if(shared_mem_struct == MAP_FAILED)
         {
             printf("Master: Map failed: %s\n", strerror(errno));
@@ -59,14 +61,12 @@ int main(int argc, char** argv)
             exit(1);
         }
         else
-        {
-            printf("Master created a shared memory segment named %s\n", argv[2]);
-        }
+            printf("Master created a shared memory segment named %s\n", shared_mem_name);
     }
     
     // Create n children
-    printf("Master created %s child processes to execute slave\n\n", argv[1]);
-    for(int i = 0; i < atoi(argv[1]); i++)
+    printf("Master created %d child processes to execute slave\n\n", num_children);
+    for(int i = 0; i < num_children; i++)
     {
         // Fork a new child on each iteration
         if(fork() == 0)
@@ -85,20 +85,18 @@ int main(int argc, char** argv)
     }
 
     // Wait for children to finish to terminate
-    for(int i = 0; i < atoi(argv[1]); i++)
+    for(int i = 0; i < num_children; i++)
         wait(NULL);
     printf("\nMaster waits for all child processes to terminate\n");
-    printf("Master received termination signals from all %s child processes\n", argv[1]);
+    printf("Master received termination signals from all %d child processes\n", num_children);
 
     // Print contents of the shared memory
     printf("Content of shared memory segment filled by child processes:\n");
     for(int i = 0; i < shared_mem_struct->index; i++)
-    {
         printf("%d\n", shared_mem_struct->response[i]);
-    }
 
     // Unmap the shared memory structure
-    if(munmap(shared_mem_struct, sizeof(struct SHARED_MEM_CLASS)) == -1)
+    if(munmap(shared_mem_struct, SIZE) == -1)
     {
         printf("Master: Unmap failed: %s\n", strerror(errno));
         exit(1);
@@ -111,7 +109,7 @@ int main(int argc, char** argv)
     }
 
     // Delete the shared memory segment
-    shm_unlink(argv[2]);
+    shm_unlink(shared_mem_name);
 
     printf("Master removed shared memory segment and is exiting\n");
 
