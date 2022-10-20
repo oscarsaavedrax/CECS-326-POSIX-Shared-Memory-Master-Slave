@@ -90,7 +90,13 @@ int main(int argc, char** argv)
     printf("\nMaster waits for all child processes to terminate\n");
     printf("Master received termination signals from all %s child processes\n", argv[1]);
 
-    
+    // Print contents of the shared memory
+    printf("Content of shared memory segment filled by child processes:\n");
+    for(int i = 0; i < shared_mem_struct->index; i++)
+    {
+        printf("%d\n", shared_mem_struct->response[i]);
+    }
+
     // Unmap the shared memory structure
     if(munmap(shared_mem_struct, sizeof(struct SHARED_MEM_CLASS)) == -1)
     {
@@ -100,7 +106,7 @@ int main(int argc, char** argv)
 
     // Close the shared memory segment
     if (close(shared_mem_fd) == -1) {
-      printf("prod: Close failed: %s\n", strerror(errno));
+      printf("Master: Close failed: %s\n", strerror(errno));
       exit(1);
     }
 
