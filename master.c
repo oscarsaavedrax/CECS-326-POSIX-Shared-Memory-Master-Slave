@@ -18,8 +18,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-int main(int argc, char** argv){
-
+int main(int argc, char** argv)
+{
     // Display identification
     printf("Master begins execution\n");
 
@@ -27,15 +27,30 @@ int main(int argc, char** argv){
     printf("Master created a shared memory segment named %s\n", argv[2]);
 
     // Create n children
+    printf("Master created %s child processes to execute slave\n\n", argv[1]);
     for(int i = 0; i < atoi(argv[1]); i++)
     {
-        // Convert child integer to char
-        char child_num[20];
-        sprintf(child_num, "%d", i+1);
+        // Fork a new child on each iteration
+        if(fork() == 0)
+        {
+            // Convert child integer to char
+            char child_num[20];
+            sprintf(child_num, "%d", i+1);
 
-        printf("Child num: %s\n", child_num);
+            // Create array with child information
+            char* child_info[] = {child_num, argv[2], NULL};
 
+            // Child process will execute slave program
+            execv("./slave", child_info);
+            exit(0);
+        }
     }
+
+    // Wait for children to finish to terminate
+    for(int i = 0; i < atoi(argv[1]); i++)
+        wait(NULL);
+    printf("\nMaster waits for all child processes to terminate\n");
+    printf("Master received termination signals from all %s child processes\n", argv[1]);
 
     return 0;
 }
