@@ -11,3 +11,16 @@
  *  next available slot in the shared memory. The pgrogram then closes
  *  the shared memory segment and terminates.
  ***********************************************************************/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+    printf("Slave begins execution\n");
+    printf("I am child number %s, received shared memory name %s\n", argv[0], argv[1]);
+
+    return 0;
+}
